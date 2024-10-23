@@ -24,6 +24,9 @@ class AudioApp(QWidget):
     # Desing of the UI
     def initUI(self):
         self.title = QLabel("Audio Adjuster")
+        self.title.setObjectName("title")
+        self.title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
         self.fileTitle = QListWidget()
         self.btnOpener = QPushButton("Choose a File")
         self.btnPlay = QPushButton("Play")
@@ -39,7 +42,7 @@ class AudioApp(QWidget):
 
         self.slider = QSlider(Qt.Orientation.Horizontal)
         self.slider.setMinimum(50)
-        self.slider.setMaximum(100)
+        self.slider.setMaximum(150)
         self.slider.setValue(100) #Playback speed
         self.slider.setTickPosition(QSlider.TickPosition.TicksBelow)
         self.slider.setTickInterval(10)
@@ -67,16 +70,57 @@ class AudioApp(QWidget):
         col2.addWidget(self.btnResume)
         col2.addWidget(self.btnReset)
 
-        row.addLayout(col1)
-        row.addLayout(col2)
+        row.addLayout(col1, 2)
+        row.addLayout(col2, 4)
 
         self.mainLayout.addLayout(row)
         self.setLayout(self.mainLayout)
+
+        self.style()
 
         # Audio classes from pyqt
         self.audioOutput = QAudioOutput()
         self.mediaPlayer = QMediaPlayer()
         self.mediaPlayer.setAudioOutput(self.audioOutput)
+
+
+    # Style method
+    def style(self):
+        self.setStyleSheet("""
+                           QWidget{
+                                background-color: #F9DBBA;
+                           }
+
+                           QPushButton{
+                                background-color: #5BB9C2;
+                                padding: 15px;
+                                border-radius: 9px;
+                                color: #333;
+                           }
+
+                           QPushButton:hover{
+                                background-color: #1A4870;
+                                color: #F9DBBA;
+                           }
+
+                           QLabel{
+                                color: #333;
+                           }
+
+                           #title{
+                                font-family: Papyrus;
+                                font-size: 40px;
+                           }
+
+                           QSlider{
+                                margin-right: 15px;
+                           }
+
+                           QListWidget{
+                                color: #333;
+                           }
+
+                           """) 
 
 
 
@@ -85,6 +129,17 @@ class AudioApp(QWidget):
         self.slider.valueChanged.connect(self.updateSlider)
         self.btnOpener.clicked.connect(self.openFile)
         self.btnPlay.clicked.connect(self.playAudio)
+        self.btnPause.clicked.connect(self.pauseAudio)
+        self.btnResume.clicked.connect(self.resumeAudio)
+        self.btnReset.clicked.connect(self.resetAudio)
+        self.fileTitle.itemSelectionChanged.connect(self.enablePlayButton)
+
+    def enablePlayButton(self):
+        # Enable the play button if there is an item selected
+        if self.fileTitle.selectedItems():
+            self.btnPlay.setEnabled(True)
+
+
 
     # Change slider number
     def updateSlider(self):
@@ -93,30 +148,23 @@ class AudioApp(QWidget):
 
     # Open files
     def openFile(self):
-        path = QFileDialog.getExistingDirectory(self, "Pick Folder")
-
-        if path:
+        self.folderPath = QFileDialog.getExistingDirectory(self, "Pick Folder")
+        if self.folderPath:
             self.fileTitle.clear()
-            for fileName in os.listdir(path):
+            for fileName in os.listdir(self.folderPath):
                 if fileName.endswith(".mp3"):
                     self.fileTitle.addItem(fileName)
-        
-        else:
-            file, _ = QFileDialog.getOpenFileName(self, "Select File", filter="Audio Files (*.mp3)")
-            if file:
-                self.fileTitle.clear()
-                self.fileTitle.addItem(os.path.basename(file))
+
 
     # Play Audio Files
     def playAudio(self):
-        if self.fileTitle.selectedItems():
+        if self.fileTitle.selectedItems() and hasattr(self, 'folderPath'):
             fileName = self.fileTitle.selectedItems()[0].text()
-            folderPath = QFileDialog.getExistingDirectory(self, "Select Folder")
-            filePath = os.path.join(folderPath, fileName)
+            filePath = os.path.join(self.folderPath, fileName)
             fileUrl = QUrl.fromLocalFile(filePath)
 
             self.mediaPlayer.setSource(fileUrl)
-            self.mediaPlayer.setPlaybackRate(self.slider.value() // 100.0)
+            self.mediaPlayer.setPlaybackRate(self.slider.value() / 100.0)
             self.mediaPlayer.play()
 
             #Deactivate button for now
@@ -125,6 +173,31 @@ class AudioApp(QWidget):
             self.btnReset.setEnabled(True)
             self.btnPlay.setDisabled(True)
 
+
+    def pauseAudio(self):
+        self.mediaPlayer.pause()
+        self.btnPause.setDisabled(True)
+        self.btnResume.setEnabled(True)
+    
+    def resumeAudio(self):
+        self.mediaPlayer.play()
+        self.btnPause.setEnabled(True)
+        self.btnResume.setDisabled(True)
+    
+    def resetAudio(self):
+        if self.mediaPlayer.isPlaying():
+            self.mediaPlayer.stop()
+        
+        self.mediaPlayer.setPosition(0)
+        self.mediaPlayer.setPlaybackRate(self.slider.value() / 100.0)
+        self.mediaPlayer.play()
+
+        self.btnPause.setEnabled(True)
+        self.btnResume.setDisabled(True)
+        self.btnReset.setDisabled(True)
+        self.btnPlay.setDisabled(True)
+
+        QTimer.singleShot(100, lambda: self.btnReset.setEnabled(True))
 
 
 if __name__ in "__main__":
