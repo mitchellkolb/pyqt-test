@@ -13,6 +13,7 @@ class AudioApp(QWidget):
         super().__init__()
         self.settings()
         self.initUI()
+        self.eventHandler()
 
     # Settings portion
     def settings(self):
@@ -24,11 +25,17 @@ class AudioApp(QWidget):
     def initUI(self):
         self.title = QLabel("Audio Adjuster")
         self.fileTitle = QListWidget()
-        self.btnOpener = QPushButton("Choose a File Please")
+        self.btnOpener = QPushButton("Choose a File")
         self.btnPlay = QPushButton("Play")
         self.btnPause = QPushButton("Pause")
         self.btnReset = QPushButton("Reset")
         self.btnResume = QPushButton("Resume")
+
+        #Deactivate button for now
+        self.btnPause.setDisabled(True)
+        self.btnReset.setDisabled(True)
+        self.btnResume.setDisabled(True)
+
 
         self.slider = QSlider(Qt.Orientation.Horizontal)
         self.slider.setMinimum(50)
@@ -37,6 +44,13 @@ class AudioApp(QWidget):
         self.slider.setTickPosition(QSlider.TickPosition.TicksBelow)
         self.slider.setTickInterval(10)
 
+        self.sliderText = QLabel("Speed: 100x")
+        self.sliderText.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        sliderLayout = QHBoxLayout()
+        sliderLayout.addWidget(self.sliderText)
+        sliderLayout.addWidget(self.slider)
+
         #Create a layout
         self.mainLayout = QVBoxLayout()
         row = QHBoxLayout()
@@ -44,7 +58,7 @@ class AudioApp(QWidget):
         col2 = QVBoxLayout()
 
         self.mainLayout.addWidget(self.title)
-        self.mainLayout.addWidget(self.slider)
+        self.mainLayout.addLayout(sliderLayout)
 
         col1.addWidget(self.fileTitle)
         col2.addWidget(self.btnOpener)
@@ -60,6 +74,35 @@ class AudioApp(QWidget):
         self.setLayout(self.mainLayout)
 
     # Event Handler
+    def eventHandler(self):
+        self.slider.valueChanged.connect(self.updateSlider)
+        self.btnOpener.clicked.connect(self.openFile)
+
+    # Change slider number
+    def updateSlider(self):
+        speed = self.slider.value() / 100
+        self.sliderText.setText(f"Speed: {speed:.2f}x")
+
+    # Open files
+    def openFile(self):
+        path = QFileDialog.getExistingDirectory(self, "Pick Folder")
+
+        if path:
+            self.fileTitle.clear()
+            for fileName in os.listdir(path):
+                if fileName.endswith(".mp3"):
+                    self.fileTitle.addItem(fileName)
+        
+        else:
+            file, _ = QFileDialog.getOpenFileName(self, "Select File", filter="Audio Files (*.mp3)")
+            if file:
+                self.fileTitle.clear()
+                self.fileTitle.addItem(os.path.basename(file))
+
+
+
+
+
 
 if __name__ in "__main__":
     app = QApplication([])
