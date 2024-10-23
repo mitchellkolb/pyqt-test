@@ -4,7 +4,7 @@
 
 import os
 from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QListWidget, QFileDialog, QSlider, QVBoxLayout, QHBoxLayout
-from PyQt6.QtCore import Qt, QUrl, QTimer
+from PyQt6.QtCore import Qt, QUrl, QTimer, QFile, QTextStream
 from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
 
 
@@ -14,6 +14,19 @@ class AudioApp(QWidget):
         self.settings()
         self.initUI()
         self.eventHandler()
+        self.loadStyle()  # Load the CSS after setting up the UI
+
+    def loadStyle(self):
+        css_path = os.path.join(os.path.dirname(__file__), 'style.css')
+        css_file = QFile(css_path)
+        if css_file.open(QFile.OpenModeFlag.ReadOnly | QFile.OpenModeFlag.Text):
+            stream = QTextStream(css_file)
+            self.setStyleSheet(stream.readAll())
+            css_file.close()
+        else:
+            print(f"Error: Cannot open {css_path}")
+
+
 
     # Settings portion
     def settings(self):
@@ -82,45 +95,6 @@ class AudioApp(QWidget):
         self.audioOutput = QAudioOutput()
         self.mediaPlayer = QMediaPlayer()
         self.mediaPlayer.setAudioOutput(self.audioOutput)
-
-
-    # Style method
-    def style(self):
-        self.setStyleSheet("""
-                           QWidget{
-                                background-color: #F9DBBA;
-                           }
-
-                           QPushButton{
-                                background-color: #5BB9C2;
-                                padding: 15px;
-                                border-radius: 9px;
-                                color: #333;
-                           }
-
-                           QPushButton:hover{
-                                background-color: #1A4870;
-                                color: #F9DBBA;
-                           }
-
-                           QLabel{
-                                color: #333;
-                           }
-
-                           #title{
-                                font-family: Papyrus;
-                                font-size: 40px;
-                           }
-
-                           QSlider{
-                                margin-right: 15px;
-                           }
-
-                           QListWidget{
-                                color: #333;
-                           }
-
-                           """) 
 
 
 
