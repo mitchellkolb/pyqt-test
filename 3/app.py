@@ -5,7 +5,7 @@
 import os
 from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QListWidget, QFileDialog, QSlider, QVBoxLayout, QHBoxLayout
 from PyQt6.QtCore import Qt, QUrl, QTimer
-from PyQt6.QtMultimedia import QMediaPlayer, QAudioFormat
+from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
 
 
 class AudioApp(QWidget):
@@ -73,10 +73,18 @@ class AudioApp(QWidget):
         self.mainLayout.addLayout(row)
         self.setLayout(self.mainLayout)
 
+        # Audio classes from pyqt
+        self.audioOutput = QAudioOutput()
+        self.mediaPlayer = QMediaPlayer()
+        self.mediaPlayer.setAudioOutput(self.audioOutput)
+
+
+
     # Event Handler
     def eventHandler(self):
         self.slider.valueChanged.connect(self.updateSlider)
         self.btnOpener.clicked.connect(self.openFile)
+        self.btnPlay.clicked.connect(self.playAudio)
 
     # Change slider number
     def updateSlider(self):
@@ -99,8 +107,23 @@ class AudioApp(QWidget):
                 self.fileTitle.clear()
                 self.fileTitle.addItem(os.path.basename(file))
 
+    # Play Audio Files
+    def playAudio(self):
+        if self.fileTitle.selectedItems():
+            fileName = self.fileTitle.selectedItems()[0].text()
+            folderPath = QFileDialog.getExistingDirectory(self, "Select Folder")
+            filePath = os.path.join(folderPath, fileName)
+            fileUrl = QUrl.fromLocalFile(filePath)
 
+            self.mediaPlayer.setSource(fileUrl)
+            self.mediaPlayer.setPlaybackRate(self.slider.value() // 100.0)
+            self.mediaPlayer.play()
 
+            #Deactivate button for now
+            self.btnPause.setEnabled(True)
+            self.btnResume.setDisabled(True)
+            self.btnReset.setEnabled(True)
+            self.btnPlay.setDisabled(True)
 
 
 
